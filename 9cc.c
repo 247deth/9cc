@@ -6,39 +6,43 @@
 #include <string.h>
 
 // トークンの種類
-typedef enum {
-  TK_RESERVED,  // 記号
-  TK_NUM,       // 整数トークン
-  TK_EOF,       // 入力の終わりを表すトークン
+typedef enum
+{
+  TK_RESERVED, // 記号
+  TK_NUM,      // 整数トークン
+  TK_EOF,      // 入力の終わりを表すトークン
 } TokenKind;
 
 typedef struct Token Token;
 
 // トークン型
-struct Token {
-  TokenKind kind;   // トークンの型
-  Token *next;      // 次の入力トークン
-  int val;          // kindがTK_NUMの場合、その数値
-  char *str;        // トークン文字列
+struct Token
+{
+  TokenKind kind; // トークンの型
+  Token *next;    // 次の入力トークン
+  int val;        // kindがTK_NUMの場合、その数値
+  char *str;      // トークン文字列
 };
 
 // 抽象構文木のノードの種類
-typedef enum {
-  ND_ADD,  // +
-  ND_SUB,  // -
-  ND_MUL,  // *
-  ND_DIV,  // /
-  ND_NUM,  // 整数
+typedef enum
+{
+  ND_ADD, // +
+  ND_SUB, // -
+  ND_MUL, // *
+  ND_DIV, // /
+  ND_NUM, // 整数
 } NodeKind;
 
 typedef struct Node Node;
 
 // 抽象構文木のノードの型
-struct Node {
-  NodeKind kind;  // ノードの型
-  Node *lhs;      // 左辺
-  Node *rhs;      // 右辺
-  int val;        // kindがND_NUMの場合のみ使う
+struct Node
+{
+  NodeKind kind; // ノードの型
+  Node *lhs;     // 左辺
+  Node *rhs;     // 右辺
+  int val;       // kindがND_NUMの場合のみ使う
 };
 
 // 現在着目しているトークン
@@ -48,13 +52,14 @@ Token *token;
 char *user_input;
 
 // エラー箇所を報告する
-void error_at(char *loc, char *fmt, ...) {
+void error_at(char *loc, char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
 
   int pos = loc - user_input;
   fprintf(stderr, "%s\n", user_input);
-  fprintf(stderr, "%*s", pos, "");  // pos個の空白を出力
+  fprintf(stderr, "%*s", pos, ""); // pos個の空白を出力
   fprintf(stderr, "^ ");
   vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");
@@ -62,7 +67,8 @@ void error_at(char *loc, char *fmt, ...) {
 }
 
 // printfと同じ引数を取る
-void error(char *fmt, ...) {
+void error(char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   vfprintf(stderr, fmt, ap);
@@ -72,7 +78,8 @@ void error(char *fmt, ...) {
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
-bool consume(char op) {
+bool consume(char op)
+{
   if (token->kind != TK_RESERVED || token->str[0] != op)
     return false;
   token = token->next;
@@ -81,7 +88,8 @@ bool consume(char op) {
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
-void expect(char op) {
+void expect(char op)
+{
   if (token->kind != TK_RESERVED || token->str[0] != op)
     error_at(token->str, "'%c'ではありません", op);
   token = token->next;
@@ -89,7 +97,8 @@ void expect(char op) {
 
 // 次のトークンが数値の場合、トークンを1つ読み進めてその数値を返す。
 // それ以外の場合にはエラーを報告する。
-int expect_number() {
+int expect_number()
+{
   if (token->kind != TK_NUM)
     error_at(token->str, "数ではありません");
   int val = token->val;
@@ -97,12 +106,14 @@ int expect_number() {
   return val;
 }
 
-bool at_eof() {
+bool at_eof()
+{
   return token->kind == TK_EOF;
 }
 
 // 新しいトークンを作成してcurに繋げる
-Token *new_token(TokenKind kind, Token *cur, char *str) {
+Token *new_token(TokenKind kind, Token *cur, char *str)
+{
   Token *tok = calloc(1, sizeof(Token));
   tok->kind = kind;
   tok->str = str;
@@ -111,24 +122,29 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
 }
 
 // 入力文字列pをトークナイズしてそれを返す
-Token *tokenize(char *p) {
+Token *tokenize(char *p)
+{
   Token head;
   head.next = NULL;
   Token *cur = &head;
 
-  while (*p) {
+  while (*p)
+  {
     // 空白文字をスキップ
-    if (isspace(*p)) {
+    if (isspace(*p))
+    {
       p++;
       continue;
     }
 
-    if (strchr("+-*/()", *p)) {
+    if (strchr("+-*/()", *p))
+    {
       cur = new_token(TK_RESERVED, cur, p++);
       continue;
     }
 
-    if (isdigit(*p)) {
+    if (isdigit(*p))
+    {
       cur = new_token(TK_NUM, cur, p);
       cur->val = strtol(p, &p, 10);
       continue;
@@ -142,7 +158,8 @@ Token *tokenize(char *p) {
 }
 
 // 新しい2項演算子ノードを作成する
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
+{
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
   node->lhs = lhs;
@@ -151,7 +168,8 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
 }
 
 // 新しい数値ノードを作成する
-Node *new_node_num(int val) {
+Node *new_node_num(int val)
+{
   Node *node = calloc(1, sizeof(Node));
   node->kind = ND_NUM;
   node->val = val;
@@ -160,31 +178,37 @@ Node *new_node_num(int val) {
 
 /* パーサの文法
 expr    = mul ("+" mul | "-" mul)*
-mul     = primary ("*" primary | "/" primary)*
+mul     = unary ("*" unary | "/" unary)*
+unary   = ("+" | "-")? primary
 primary = num | "(" expr ")"
 */
 
 Node *primary();
+Node *unary();
 
 // 積・商のパーサ
-Node *mul() {
-  Node *node = primary();
+Node *mul()
+{
+  Node *node = unary();
 
-  for (;;) {
+  for (;;)
+  {
     if (consume('*'))
-      node = new_node(ND_MUL, node, primary());
+      node = new_node(ND_MUL, node, unary());
     else if (consume('/'))
-      node = new_node(ND_DIV, node, primary());
+      node = new_node(ND_DIV, node, unary());
     else
       return node;
   }
 }
 
 // 四則演算式のパーサ
-Node *expr() {
+Node *expr()
+{
   Node *node = mul();
 
-  for (;;) {
+  for (;;)
+  {
     if (consume('+'))
       node = new_node(ND_ADD, node, mul());
     else if (consume('-'))
@@ -195,9 +219,11 @@ Node *expr() {
 }
 
 // 中括弧のパーサ
-Node *primary() {
+Node *primary()
+{
   // 次のトークンが "(" なら、"(" expr ")" のはず
-  if (consume('(')) {
+  if (consume('('))
+  {
     Node *node = expr();
     expect(')');
     return node;
@@ -207,9 +233,21 @@ Node *primary() {
   return new_node_num(expect_number());
 }
 
+// 単項演算子のパーサ
+Node *unary()
+{
+  if (consume('+'))
+    return primary();
+  if (consume('-'))
+    return new_node(ND_SUB, new_node_num(0), primary());
+  return primary();
+}
+
 // コード生成
-void gen(Node *node) {
-  if (node->kind == ND_NUM) {
+void gen(Node *node)
+{
+  if (node->kind == ND_NUM)
+  {
     printf("  push %d\n", node->val);
     return;
   }
@@ -220,7 +258,8 @@ void gen(Node *node) {
   printf("  pop rdi\n");
   printf("  pop rax\n");
 
-  switch (node->kind) {
+  switch (node->kind)
+  {
   case ND_ADD:
     printf("  add rax, rdi\n");
     break;
@@ -239,8 +278,10 @@ void gen(Node *node) {
   printf("  push rax\n");
 }
 
-int main(int argc, char **argv) {
-  if (argc != 2) {
+int main(int argc, char **argv)
+{
+  if (argc != 2)
+  {
     error("引数の個数が正しくありません");
     return 1;
   }
