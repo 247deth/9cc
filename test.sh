@@ -63,4 +63,6 @@ assert 0 '1>=2;'
 
 assert 4 'a=1;b=2;c=a+b;z=c+a;'
 
+assert 4 'abc=1;_bc_c10=2;cbb=abc+_bc_c10;_z_234=cbb+abc;'
+
 echo OK

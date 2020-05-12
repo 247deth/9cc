@@ -63,8 +63,13 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    if ('a' <= *p && *p <= 'z') {
-      cur = new_token(TK_IDENT, cur, p++, 1);
+    if (strspn(p, "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") >
+        0) {
+      int spn = 1 + strspn(p + 1,
+                           "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX"
+                           "YZ1234567890");
+      cur = new_token(TK_IDENT, cur, p, spn);
+      p = p + spn;
       continue;
     }
 
