@@ -13,10 +13,10 @@ int main(int argc, char **argv) {
   token = tokenize(argv[1]);
 
   // パースする
-  Node *node = expr();
+  program();
 
   // コード生成する
-  codegen(node);
+  codegen();
 
   return 0;
 }

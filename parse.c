@@ -1,5 +1,7 @@
 #include "9cc.h"
 
+Node *code[100];
+
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
 bool consume(char *op) {
@@ -8,6 +10,17 @@ bool consume(char *op) {
     return false;
   token = token->next;
   return true;
+}
+
+// 次のトークンがTK_IDENTの時には、トークンを1つ読み進めて
+// TK_IDENTなトークンを返す。それ以外の場合にはNULLを返す。
+Token *consume_ident() {
+  if (token->kind == TK_IDENT) {
+    Token *ret = token;
+    token = token->next;
+    return ret;
+  }
+  return NULL;
 }
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
@@ -46,14 +59,19 @@ Node *new_node_num(int val) {
 }
 
 /* パーサの文法
-expr       = equality
+program    = stmt*
+stmt       = expr ";"
+expr       = assign
+assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
 relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 add        = mul ("+" mul | "-" mul)*
 mul        = unary ("*" unary | "/" unary)*
 unary      = ("+" | "-")? primary
-primary    = num | "(" expr ")"
+primary    = num | ident | "(" expr ")"
 */
+
+Node *expr();
 
 // 中括弧のパーサ
 Node *primary() {
@@ -64,7 +82,16 @@ Node *primary() {
     return node;
   }
 
-  // そうでなければ数値のはず
+  // 次のトークンがローカル変数
+  Token *tok = consume_ident();
+  if (tok) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = (tok->str[0] - 'a' + 1) * 8;
+    return node;
+  }
+
+  // 上のいずれでもないなら数値のはず
   return new_node_num(expect_number());
 }
 
@@ -135,5 +162,26 @@ Node *equality() {
   }
 }
 
+// 代入文のパーサ
+Node *assign() {
+  Node *node = equality();
+  if (consume("=")) return new_node(ND_ASSIGN, node, assign());
+  return node;
+}
+
 // 式のパーサ
-Node *expr() { return equality(); }
+Node *expr() { return assign(); }
+
+// 文のパーサ
+Node *stmt() {
+  Node *node = expr();
+  expect(";");
+  return node;
+}
+
+// プログラムのパーサ
+void program() {
+  int i = 0;
+  while (!at_eof()) code[i++] = stmt();
+  code[i] = NULL;
+}
