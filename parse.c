@@ -47,6 +47,14 @@ bool consume(char *op) {
   return true;
 }
 
+// 次のトークンが期待しているkindの時には、トークンを1つ読み進めて
+// 真を返す。それ以外の場合には偽を返す。
+bool consume_kind(TokenKind kind) {
+  if (token->kind != kind) return false;
+  token = token->next;
+  return true;
+}
+
 // 次のトークンがTK_IDENTの時には、トークンを1つ読み進めて
 // TK_IDENTなトークンを返す。それ以外の場合にはNULLを返す。
 Token *consume_ident() {
@@ -95,7 +103,7 @@ Node *new_node_num(int val) {
 
 /* パーサの文法
 program    = stmt*
-stmt       = expr ";"
+stmt       = expr ";" | "return" expr ";"
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -211,7 +219,14 @@ Node *expr() { return assign(); }
 
 // 文のパーサ
 Node *stmt() {
-  Node *node = expr();
+  Node *node;
+  if (consume_kind(TK_RETURN)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_RETURN;
+    node->lhs = expr();
+  } else {
+    node = expr();
+  }
   expect(";");
   return node;
 }

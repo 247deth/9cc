@@ -65,4 +65,9 @@ assert 4 'a=1;b=2;c=a+b;z=c+a;'
 
 assert 4 'abc=1;_bc_c10=2;cbb=abc+_bc_c10;_z_234=cbb+abc;'
 
+assert 4 'abc=1;_bc_c10=2;cbb=abc+_bc_c10;_z_234=cbb+abc;return _z_234;'
+
+assert 3 'abc=1;_bc_c10=2;return abc*(_bc_c10+abc);cbb=abc+_bc_c10;_z_234=cbb+abc;return _z_234;'
+
+
 echo OK
