@@ -93,6 +93,16 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   return node;
 }
 
+// 新しい3項演算子ノードを作成する
+Node *new_node_3(NodeKind kind, Node *lhs, Node *mhs, Node *rhs) {
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = kind;
+  node->lhs = lhs;
+  node->mhs = mhs;
+  node->rhs = rhs;
+  return node;
+}
+
 // 新しい数値ノードを作成する
 Node *new_node_num(int val) {
   Node *node = calloc(1, sizeof(Node));
@@ -103,7 +113,9 @@ Node *new_node_num(int val) {
 
 /* パーサの文法
 program    = stmt*
-stmt       = expr ";" | "return" expr ";"
+stmt       = expr ";"
+             | "return" expr ";"
+             | "if" "(" expr ")" stmt ("else" stmt)?
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -220,13 +232,26 @@ Node *expr() { return assign(); }
 // 文のパーサ
 Node *stmt() {
   Node *node;
+
   if (consume_kind(TK_RETURN)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->lhs = expr();
-  } else {
-    node = expr();
+    expect(";");
+    return node;
   }
+
+  if (consume_kind(TK_IF)) {
+    expect("(");
+    node = expr();
+    expect(")");
+    Node *node2 = stmt();
+    if (consume_kind(TK_ELSE))
+      return new_node_3(ND_IFELSE, node, node2, stmt());
+    return new_node(ND_IF, node, node2);
+  }
+
+  node = expr();
   expect(";");
   return node;
 }

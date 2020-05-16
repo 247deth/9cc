@@ -1,5 +1,8 @@
 #include "9cc.h"
 
+// ラベルのシーケンシャルID
+unsigned int id;
+
 // 左辺値（ローカル変数）のアドレスを計算してスタックにpush
 void gen_lval(Node *node) {
   if (node->kind != ND_LVAR) error("代入の左辺値が変数ではありません");
@@ -37,6 +40,28 @@ void gen(Node *node) {
       printf("  pop rbp\n");
       printf("  ret\n");
       return;
+    case ND_IF:
+      gen(node->lhs);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je  .Lend%u\n", id);
+      gen(node->rhs);
+      printf(".Lend%u:\n", id++);
+      return;
+    case ND_IFELSE: {
+      gen(node->lhs);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      int id_else = id;
+      int id_end = ++id;
+      printf("  je  .Lelse%u\n", id_else);
+      gen(node->mhs);
+      printf("  jmp .Lend%u\n", id_end);
+      printf(".Lelse%u:\n", id_else);
+      gen(node->rhs);
+      printf(".Lend%d:\n", id_end);
+      return;
+    }
   }
 
   gen(node->lhs);
