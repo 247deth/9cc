@@ -40,26 +40,39 @@ void gen(Node *node) {
       printf("  pop rbp\n");
       printf("  ret\n");
       return;
-    case ND_IF:
+    case ND_IF: {
+      unsigned int my_id = id++;
       gen(node->lhs);
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
-      printf("  je  .Lend%u\n", id);
+      printf("  je  .Lend%u\n", my_id);
       gen(node->rhs);
-      printf(".Lend%u:\n", id++);
+      printf(".Lend%u:\n", my_id);
       return;
+    }
     case ND_IFELSE: {
+      unsigned int my_id = id++;
       gen(node->lhs);
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
-      int id_else = id;
-      int id_end = ++id;
-      printf("  je  .Lelse%u\n", id_else);
+      printf("  je  .Lelse%u\n", my_id);
       gen(node->mhs);
-      printf("  jmp .Lend%u\n", id_end);
-      printf(".Lelse%u:\n", id_else);
+      printf("  jmp .Lend%u\n", my_id);
+      printf(".Lelse%u:\n", my_id);
       gen(node->rhs);
-      printf(".Lend%d:\n", id_end);
+      printf(".Lend%u:\n", my_id);
+      return;
+    }
+    case ND_WHILE: {
+      unsigned int my_id = id++;
+      printf(".Lbegin%u:\n", my_id);
+      gen(node->lhs);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je  .Lend%u\n", my_id);
+      gen(node->rhs);
+      printf("  jmp .Lbegin%u\n", my_id);
+      printf(".Lend%u:\n", my_id);
       return;
     }
   }
@@ -111,6 +124,8 @@ void gen(Node *node) {
 
 // コード生成部
 void codegen() {
+  unsigned int stacksize = 0;
+  if (locals) stacksize = locals->offset;
   // アセンブリの前半部分を出力
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
@@ -120,7 +135,7 @@ void codegen() {
   // 変数26個文の領域を確保する
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
-  printf("  sub rsp, 208\n");
+  printf("  sub rsp, %u\n", stacksize);
 
   // 先頭の式から順にコード生成
   for (int i = 0; code[i]; i++) {

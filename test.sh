@@ -74,4 +74,6 @@ assert 1 'a=1;b=-1;if(a>b)return a+a*b+a;else return a+a;'
 assert 2 'a=1;b=-1;if(a<=b)return a+a*b+a;else return a+a;'
 assert 3 'a=1;b=-1;if(a<b)return a+a*b+a;else if(a==b) return a+a;else return 3;'
 
+assert 16 'a=2;while(a<=10)a=a*a;return a;'
+
 echo OK

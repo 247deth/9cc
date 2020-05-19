@@ -12,6 +12,7 @@ typedef enum {
   TK_RETURN,    // return
   TK_IF,        // if
   TK_ELSE,      // else
+  TK_WHILE,     // while
   TK_NUM,       // 整数トークン
   TK_EOF,       // 入力の終わりを表すトークン
 } TokenKind;
@@ -42,6 +43,7 @@ typedef enum {
   ND_RETURN,  // return
   ND_IF,      // elseのないif
   ND_IFELSE,  // if (...) ...; else ...;
+  ND_WHILE,   // while
   ND_NUM,     // 整数
 } NodeKind;
 
@@ -57,6 +59,16 @@ struct Node {
   int offset;     // kindがND_LVARの場合のみ使う
 };
 
+typedef struct LVar LVar;
+
+// ローカル変数の型
+struct LVar {
+  LVar *next;  // 次の変数がNULL
+  char *name;  // 変数の名前
+  int len;     // 名前の長さ
+  int offset;  // RBPからのオフセット
+};
+
 // 現在着目しているトークン
 extern Token *token;
 
@@ -65,6 +77,9 @@ extern char *user_input;
 
 // パースした文
 extern Node *code[];
+
+// ローカル変数
+extern LVar *locals;
 
 void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);

@@ -2,16 +2,6 @@
 
 Node *code[100];
 
-typedef struct LVar LVar;
-
-// ローカル変数の型
-struct LVar {
-  LVar *next;  // 次の変数がNULL
-  char *name;  // 変数の名前
-  int len;     // 名前の長さ
-  int offset;  // RBPからのオフセット
-};
-
 //ローカル変数
 LVar *locals;
 
@@ -116,6 +106,7 @@ program    = stmt*
 stmt       = expr ";"
              | "return" expr ";"
              | "if" "(" expr ")" stmt ("else" stmt)?
+             | "while" "(" expr ")" stmt
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -249,6 +240,13 @@ Node *stmt() {
     if (consume_kind(TK_ELSE))
       return new_node_3(ND_IFELSE, node, node2, stmt());
     return new_node(ND_IF, node, node2);
+  }
+
+  if (consume_kind(TK_WHILE)) {
+    expect("(");
+    node = expr();
+    expect(")");
+    return new_node(ND_WHILE, node, stmt());
   }
 
   node = expr();
