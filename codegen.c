@@ -25,8 +25,8 @@ void gen(Node *node) {
       printf("  push rax\n");
       return;
     case ND_ASSIGN:
-      gen_lval(node->lhs);
-      gen(node->rhs);
+      gen_lval(node->edge[0]);
+      gen(node->edge[1]);
 
       printf("  pop rdi\n");
       printf("  pop rax\n");
@@ -34,7 +34,7 @@ void gen(Node *node) {
       printf("  push rdi\n");
       return;
     case ND_RETURN:
-      gen(node->lhs);
+      gen(node->edge[0]);
       printf("  pop rax\n");
       printf("  mov rsp, rbp\n");
       printf("  pop rbp\n");
@@ -42,43 +42,59 @@ void gen(Node *node) {
       return;
     case ND_IF: {
       unsigned int my_id = id++;
-      gen(node->lhs);
+      gen(node->edge[0]);
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
       printf("  je  .Lend%u\n", my_id);
-      gen(node->rhs);
+      gen(node->edge[1]);
       printf(".Lend%u:\n", my_id);
       return;
     }
     case ND_IFELSE: {
       unsigned int my_id = id++;
-      gen(node->lhs);
+      gen(node->edge[0]);
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
       printf("  je  .Lelse%u\n", my_id);
-      gen(node->mhs);
+      gen(node->edge[1]);
       printf("  jmp .Lend%u\n", my_id);
       printf(".Lelse%u:\n", my_id);
-      gen(node->rhs);
+      gen(node->edge[2]);
       printf(".Lend%u:\n", my_id);
       return;
     }
     case ND_WHILE: {
       unsigned int my_id = id++;
       printf(".Lbegin%u:\n", my_id);
-      gen(node->lhs);
+      gen(node->edge[0]);
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
       printf("  je  .Lend%u\n", my_id);
-      gen(node->rhs);
+      gen(node->edge[1]);
       printf("  jmp .Lbegin%u\n", my_id);
       printf(".Lend%u:\n", my_id);
       return;
     }
+    case ND_FOR: {
+      unsigned int my_id = id++;
+      if (node->edge[0]) gen(node->edge[0]);
+      printf(".Lbegin%u:\n", my_id);
+      if (node->edge[1]) {
+        gen(node->edge[1]);
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  je  .Lend%u\n", my_id);
+      }
+      gen(node->edge[3]);
+      if (node->edge[2]) gen(node->edge[2]);
+      printf("  jmp .Lbegin%u\n", my_id);
+      if (node->edge[1]) printf(".Lend%u:\n", my_id);
+      return;
+    }
   }
 
-  gen(node->lhs);
-  gen(node->rhs);
+  gen(node->edge[0]);
+  gen(node->edge[1]);
 
   printf("  pop rdi\n");
   printf("  pop rax\n");
@@ -132,7 +148,7 @@ void codegen() {
   printf("main:\n");
 
   // プロローグ
-  // 変数26個文の領域を確保する
+  // 変数の領域を確保する
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
   printf("  sub rsp, %u\n", stacksize);

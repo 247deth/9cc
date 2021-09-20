@@ -76,4 +76,11 @@ assert 3 'a=1;b=-1;if(a<b)return a+a*b+a;else if(a==b) return a+a;else return 3;
 
 assert 16 'a=2;while(a<=10)a=a*a;return a;'
 
+assert 55 'a=0;for(i=1;i<11;i=i+1)a=a+i;return a;'
+assert 55 'a=0;i=1;for(;i<11;i=i+1)a=a+i;return a;'
+assert 11 'for(i=1;;i=i+1)if(i==11)return i;'
+assert 11 'for(i=1;i<11;)i=i+1;return i;'
+assert 11 'i=1;for(;;)return i+10;'
+assert 110 'a=0;for(i=0; i<2; i=i+1)for(j=1; j<11; j=j+1)a=a+j;return a;'
+
 echo OK

@@ -78,8 +78,8 @@ int expect_number() {
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
-  node->lhs = lhs;
-  node->rhs = rhs;
+  node->edge[0] = lhs;
+  node->edge[1] = rhs;
   return node;
 }
 
@@ -87,9 +87,17 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
 Node *new_node_3(NodeKind kind, Node *lhs, Node *mhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
-  node->lhs = lhs;
-  node->mhs = mhs;
-  node->rhs = rhs;
+  node->edge[0] = lhs;
+  node->edge[1] = mhs;
+  node->edge[2] = rhs;
+  return node;
+}
+
+// 新しいN分木ノードを作成する
+Node *new_node_n(NodeKind kind, Node **edge, int size) {
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = kind;
+  for (int i = 0; i < size; i++) node->edge[i] = *(edge + i);
   return node;
 }
 
@@ -107,6 +115,7 @@ stmt       = expr ";"
              | "return" expr ";"
              | "if" "(" expr ")" stmt ("else" stmt)?
              | "while" "(" expr ")" stmt
+             | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -227,7 +236,7 @@ Node *stmt() {
   if (consume_kind(TK_RETURN)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
-    node->lhs = expr();
+    node->edge[0] = expr();
     expect(";");
     return node;
   }
@@ -247,6 +256,25 @@ Node *stmt() {
     node = expr();
     expect(")");
     return new_node(ND_WHILE, node, stmt());
+  }
+
+  if (consume_kind(TK_FOR)) {
+    Node *nodes[4] = {0};
+    expect("(");
+    if (!consume(";")) {
+      nodes[0] = expr();
+      expect(";");
+    }
+    if (!consume(";")) {
+      nodes[1] = expr();
+      expect(";");
+    }
+    if (!consume(")")) {
+      nodes[2] = expr();
+      expect(")");
+    }
+    nodes[3] = stmt();
+    return new_node_n(ND_FOR, &nodes, 4);
   }
 
   node = expr();

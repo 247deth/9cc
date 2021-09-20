@@ -13,6 +13,7 @@ typedef enum {
   TK_IF,        // if
   TK_ELSE,      // else
   TK_WHILE,     // while
+  TK_FOR,       // for
   TK_NUM,       // 整数トークン
   TK_EOF,       // 入力の終わりを表すトークン
 } TokenKind;
@@ -44,6 +45,7 @@ typedef enum {
   ND_IF,      // elseのないif
   ND_IFELSE,  // if (...) ...; else ...;
   ND_WHILE,   // while
+  ND_FOR,     // for (...;...;...) ...;
   ND_NUM,     // 整数
 } NodeKind;
 
@@ -52,9 +54,7 @@ typedef struct Node Node;
 // 抽象構文木のノードの型
 struct Node {
   NodeKind kind;  // ノードの型
-  Node *lhs;      // 左辺
-  Node *mhs;      // 中辺（と言っていいのか？）
-  Node *rhs;      // 右辺
+  Node *edge[4];
   int val;        // kindがND_NUMの場合のみ使う
   int offset;     // kindがND_LVARの場合のみ使う
 };
